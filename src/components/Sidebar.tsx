@@ -33,7 +33,7 @@ export default function Sidebar() {
       icon: <BookOpen size={20} />,
     },
     {
-      name: "Return Book",
+      name: "Borrowed Book",
       path: "/return-book",
       icon: <BookCheck size={20} />,
     },

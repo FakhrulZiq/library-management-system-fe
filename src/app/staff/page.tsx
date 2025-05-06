@@ -1,47 +1,42 @@
 "use client";
 
-import { useAuth } from "@/context/authContext";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
-  ArrowUturnLeftIcon,
   EyeIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
+  PencilSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/context/authContext";
+import { toast, ToastContainer } from "react-toastify";
 
-interface Book {
+interface Student {
   id: string;
-  borrowDate: string;
-  returnDate: string;
-  dueDate: string;
-  remainingDay: string;
+  email: string;
+  role: string;
+  name: string;
+  matricOrStaffNo: number;
   status: string;
-  book: BookDetail;
 }
 
-interface BookDetail {
-  title: string;
-  author: string;
-}
-
-interface BookResponse {
+interface StudentResponse {
   startRecord: number;
   endRecord: number;
   nextPage: number;
   total: number;
   totalPages: number;
-  data: Book[];
+  data: Student[];
 }
 
-export default function BookList() {
-  const [books, setBooks] = useState<Book[]>([]);
+export default function StaffList() {
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [pendingStatuses, setPendingStatuses] = useState<string[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
-
+  const [pendingRoles, setPendingRoles] = useState<string[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [pagination, setPagination] = useState({
     pageNum: 1,
     pageSize: 10,
@@ -49,14 +44,14 @@ export default function BookList() {
     totalPages: 0,
   });
   const router = useRouter();
-  const { isLoading } = useAuth();
+  const { role, isLoading } = useAuth();
 
   if (isLoading) return <div>Loading...</div>;
 
-  const fetchBooks = async () => {
+  const fetchStaff = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/borrowedBook/student", {
+      const res = await fetch("http://localhost:3001/user/listUser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,26 +59,27 @@ export default function BookList() {
         },
         body: JSON.stringify({
           search,
-          studentId: localStorage.getItem("id"),
-          statuses: selectedStatus,
+          roles:
+            selectedRoles.length > 0 ? selectedRoles : ["librarian", "admin"],
           pageNum: pagination.pageNum,
           pageSize: pagination.pageSize,
         }),
       });
 
       if (!res.ok) {
-        throw new Error("Failed to fetch borrow books");
+        const errData = await res.json();
+        toast.error(errData.message || "Failed to fetch staff");
       }
 
-      const data: BookResponse = await res.json();
-      setBooks(data.data);
+      const data: StudentResponse = await res.json();
+      setStudents(data.data);
       setPagination((prev) => ({
         ...prev,
         total: data.total,
         totalPages: data.totalPages,
       }));
     } catch (error) {
-      console.error("Error fetching books:", error);
+      console.error("Error fetching students:", error);
     } finally {
       setLoading(false);
     }
@@ -91,15 +87,15 @@ export default function BookList() {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    fetchBooks();
+    fetchStaff();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.pageNum, pagination.pageSize, selectedStatus]);
+  }, [selectedRoles, pagination.pageNum, pagination.pageSize]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSelectedStatus(pendingStatuses);
+    setSelectedRoles(pendingRoles);
     setPagination((prev) => ({ ...prev, pageNum: 1 }));
-    fetchBooks();
+    fetchStaff();
   };
 
   const handlePageChange = (newPage: number) => {
@@ -108,17 +104,17 @@ export default function BookList() {
 
   const toggleFilterDropdown = () => setShowFilterDropdown((prev) => !prev);
 
-  const handlePendingStatusChange = (status: string) => {
-    setPendingStatuses((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status]
+  const handlePendingRoleChange = (roles: string) => {
+    setPendingRoles((prev) =>
+      prev.includes(roles)
+        ? prev.filter((s) => s !== roles)
+        : [...prev, roles]
     );
   };
 
   return (
     <div className="container mx-auto px-4 text-gray-700 py-8">
-      <h1 className="text-2xl font-bold mb-6">Borrowed Book List</h1>
+      <h1 className="text-2xl font-bold mb-6">Student List</h1>
 
       {/* Search Form */}
       <form onSubmit={handleSearch} className="mb-6 w-full relative">
@@ -153,18 +149,18 @@ export default function BookList() {
                 <label className="flex items-center space-x-2 text-sm mb-2">
                   <input
                     type="checkbox"
-                    checked={pendingStatuses.includes("Borrowed")}
-                    onChange={() => handlePendingStatusChange("Borrowed")}
+                    checked={pendingRoles.includes("Admin")}
+                    onChange={() => handlePendingRoleChange("Admin")}
                   />
-                  <span>Borrowed</span>
+                  <span>Admin</span>
                 </label>
                 <label className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
-                    checked={pendingStatuses.includes("Returned")}
-                    onChange={() => handlePendingStatusChange("Returned")}
+                    checked={pendingRoles.includes("Librarian")}
+                    onChange={() => handlePendingRoleChange("Librarian")}
                   />
-                  <span>Returned</span>
+                  <span>Librarian</span>
                 </label>
               </div>
             )}
@@ -192,19 +188,16 @@ export default function BookList() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Title
+                    Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Author
+                    Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Borrow Date
+                    Role
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Due Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Remaining Day
+                    Matric No
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -215,29 +208,26 @@ export default function BookList() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {books.map((book) => (
-                  <tr key={book.id} className="hover:bg-gray-50">
+                {students.map((student) => (
+                  <tr key={student.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {book.book.title}
+                      {student.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.book.author}
+                      {student.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.borrowDate}
+                      {student.role}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.dueDate}
+                      {student.matricOrStaffNo}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.remainingDay}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.status}
+                      {student.status}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
                       <button
-                        onClick={() => router.push(`/book/${book.id}`)}
+                        onClick={() => router.push(`/user/${student.id}`)}
                         className="relative group p-1 cursor-pointer"
                         title="View"
                       >
@@ -246,18 +236,31 @@ export default function BookList() {
                           View
                         </span>
                       </button>
-
-                      {book.status === "Borrowed" && (
-                        <button
-                          onClick={() => router.push(`/book/${book.id}/return`)}
-                          className="relative group p-1 cursor-pointer"
-                          title="Return"
-                        >
-                          <ArrowUturnLeftIcon className="w-5 h-5 text-green-600" />
-                          <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                            Return
-                          </span>
-                        </button>
+                      {role === "admin" && (
+                        <>
+                          <button
+                            onClick={() =>
+                              router.push(`/user/update/${student.id}`)
+                            }
+                            className="relative group p-1"
+                            title="Update"
+                          >
+                            <PencilSquareIcon className="w-5 h-5 text-yellow-600" />
+                            <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              Update
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(student.id)}
+                            className="relative group p-1"
+                            title="Delete"
+                          >
+                            <TrashIcon className="w-5 h-5 text-red-600" />
+                            <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              Delete
+                            </span>
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -284,7 +287,8 @@ export default function BookList() {
                     pagination.total
                   )}
                 </span>{" "}
-                of <span className="font-medium">{pagination.total}</span> books
+                of <span className="font-medium">{pagination.total}</span>{" "}
+                Students
               </p>
             </div>
 
@@ -353,6 +357,7 @@ export default function BookList() {
           </div>
         </>
       )}
+      <ToastContainer position="top-right" />
     </div>
   );
 }
