@@ -9,6 +9,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/authContext";
+import { ConfirmationModal } from "@/components/ConfirmationMessageModal";
 
 interface Book {
   id: string;
@@ -38,6 +39,11 @@ export default function BookList() {
     total: 0,
     totalPages: 0,
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const router = useRouter();
   const { role, isLoading } = useAuth();
 
@@ -90,6 +96,49 @@ export default function BookList() {
 
   const handlePageChange = (newPage: number) => {
     setPagination((prev) => ({ ...prev, pageNum: newPage }));
+  };
+
+  const handleDelete = (bookId: string) => {
+    setBookToDelete(bookId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!bookToDelete) return;
+
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      const res = await fetch(`http://localhost:3001/book/${bookToDelete}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(res.statusText || "Failed to delete book");
+      }
+
+      // Refresh the book list after successful deletion
+      await fetchBooks();
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      setDeleteError(
+        error instanceof Error ? error.message : "Failed to delete book"
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setBookToDelete(null);
+    setDeleteError(null);
   };
 
   return (
@@ -198,6 +247,7 @@ export default function BookList() {
                             onClick={() => handleDelete(book.id)}
                             className="relative group p-1"
                             title="Delete"
+                            disabled={deleteLoading}
                           >
                             <TrashIcon className="w-5 h-5 text-red-600" />
                             <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -299,6 +349,27 @@ export default function BookList() {
             </div>
           </div>
         </>
+      )}
+      {showDeleteModal && (
+        <ConfirmationModal
+          message="Are you sure you want to delete this book? This action cannot be undone."
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+          confirmText={deleteLoading ? "Deleting..." : "Delete"}
+          cancelText="Cancel"
+        />
+      )}
+
+      {deleteError && (
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
+          <span className="block sm:inline">{deleteError}</span>
+          <button
+            onClick={() => setDeleteError(null)}
+            className="absolute top-0 right-0 px-2 py-1"
+          >
+            &times;
+          </button>
+        </div>
       )}
     </div>
   );

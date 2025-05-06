@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { FiLock, FiMail } from "react-icons/fi";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -25,21 +26,23 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const errData = await res.json();
-        setError(errData.message || "Login failed");
-      } else {
-        const data = await res.json();
-        login(
-          data.accessToken,
-          data.refreshToken,
-          data.role,
-          data.email,
-          data.name,
-          data.id
-        );
+        toast.error(errData.message || "Login failed");
+        return;
       }
+
+      const data = await res.json();
+      login(
+        data.accessToken,
+        data.refreshToken,
+        data.role,
+        data.email,
+        data.name,
+        data.id
+      );
+      toast.success("Login successful!");
     } catch (err) {
       console.warn(err);
-      setError("An error occurred during login");
+      toast.error("An error occurred during login");
     }
   };
 
@@ -52,8 +55,6 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
           Login
         </h1>
-
-        {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
 
         {/* Email field */}
         <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -107,6 +108,7 @@ export default function LoginPage() {
           </Link>
         </p>
       </form>
+      <ToastContainer position="top-right" />
     </div>
   );
 }
