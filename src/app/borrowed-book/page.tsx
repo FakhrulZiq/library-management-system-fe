@@ -1,59 +1,62 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import {
-  EyeIcon,
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/authContext";
-import { toast, ToastContainer } from "react-toastify";
-import { ConfirmationModal } from "@/components/ConfirmationMessageModal";
+import {
+  ArrowUturnLeftIcon,
+  EyeIcon,
+  FunnelIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-interface Student {
+interface BorrowedBook {
   id: string;
-  email: string;
-  role: string;
-  name: string;
-  matricOrStaffNo: number;
+  borrowDate: string;
+  returnDate: string;
+  dueDate: string;
+  remainingDay: number;
   status: string;
+  book: BookDetail;
 }
 
-interface StudentResponse {
+interface BookDetail {
+  title: string;
+  author: string;
+}
+
+interface BorrowedBookResponse {
   startRecord: number;
   endRecord: number;
   nextPage: number;
   total: number;
   totalPages: number;
-  data: Student[];
+  data: BorrowedBook[];
 }
 
-export default function StudentList() {
-  const [students, setStudents] = useState<Student[]>([]);
+export default function BookList() {
+  const [borrowedBooks, setBorrowedBooks] = useState<BorrowedBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [pendingStatuses, setPendingStatuses] = useState<string[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+
   const [pagination, setPagination] = useState({
     pageNum: 1,
     pageSize: 10,
     total: 0,
     totalPages: 0,
   });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [studentToDelete, setstudentToDelete] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
   const router = useRouter();
-  const { role, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) return <div>Loading...</div>;
 
-  const fetchstudents = async () => {
+  const fetchBorrowedBooks = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/user/listUser", {
+      const res = await fetch("http://localhost:3001/borrowedBook/student", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,26 +64,25 @@ export default function StudentList() {
         },
         body: JSON.stringify({
           search,
-          roles: ["student"],
+          statuses: selectedStatus,
           pageNum: pagination.pageNum,
           pageSize: pagination.pageSize,
         }),
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        toast.error(errData.message || "Failed to fetch students");
+        throw new Error("Failed to fetch borrow books");
       }
 
-      const data: StudentResponse = await res.json();
-      setStudents(data.data);
+      const data: BorrowedBookResponse = await res.json();
+      setBorrowedBooks(data.data);
       setPagination((prev) => ({
         ...prev,
         total: data.total,
         totalPages: data.totalPages,
       }));
     } catch (error) {
-      console.error("Error fetching students:", error);
+      console.error("Error fetching borrowed books:", error);
     } finally {
       setLoading(false);
     }
@@ -88,69 +90,36 @@ export default function StudentList() {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    fetchstudents();
+    fetchBorrowedBooks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.pageNum, pagination.pageSize]);
+  }, [search, pagination.pageNum, pagination.pageSize, selectedStatus]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSelectedStatus(pendingStatuses);
     setPagination((prev) => ({ ...prev, pageNum: 1 }));
-    fetchstudents();
   };
 
   const handlePageChange = (newPage: number) => {
     setPagination((prev) => ({ ...prev, pageNum: newPage }));
   };
 
-  const handleDelete = (studentId: string) => {
-    setstudentToDelete(studentId);
-    setShowDeleteModal(true);
-  };
+  const toggleFilterDropdown = () => setShowFilterDropdown((prev) => !prev);
 
-  const confirmDelete = async () => {
-    if (!studentToDelete) return;
-
-    setDeleteLoading(true);
-    setDeleteError(null);
-
-    try {
-      const res = await fetch(`http://localhost:3001/user/${studentToDelete}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(res.statusText || "Failed to delete student");
-      }
-
-      // Refresh the student list after successful deletion
-      await fetchstudents();
-      setShowDeleteModal(false);
-    } catch (error) {
-      console.error("Error deleting student:", error);
-      setDeleteError(
-        error instanceof Error ? error.message : "Failed to delete student"
-      );
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setstudentToDelete(null);
-    setDeleteError(null);
+  const handlePendingStatusChange = (status: string) => {
+    setPendingStatuses((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
   };
 
   return (
     <div className="container mx-auto px-4 text-gray-700 py-8">
-      <h1 className="text-2xl font-bold mb-6">Student List</h1>
+      <h1 className="text-2xl font-bold mb-6">Borrowed Book List</h1>
 
       {/* Search Form */}
-      <form onSubmit={handleSearch} className="mb-6 w-full">
+      <form onSubmit={handleSearch} className="mb-6 w-full relative">
         <div className="flex items-center space-x-2 w-full">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -164,6 +133,50 @@ export default function StudentList() {
               placeholder="Search by title or author"
             />
           </div>
+
+          {/* Filter Button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={toggleFilterDropdown}
+              className="px-3 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm flex items-center"
+            >
+              <FunnelIcon className="w-4 h-4 mr-1" />
+              Filter
+            </button>
+
+            {/* Dropdown */}
+            {showFilterDropdown && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg p-3 z-10">
+                <label className="flex items-center space-x-2 text-sm mb-2">
+                  <input
+                    type="checkbox"
+                    checked={pendingStatuses.includes("Borrowed")}
+                    onChange={() => handlePendingStatusChange("Borrowed")}
+                  />
+                  <span>Borrowed</span>
+                </label>
+                <label className="flex items-center space-x-2 text-sm mb-2">
+                  <input
+                    type="checkbox"
+                    checked={pendingStatuses.includes("Losted")}
+                    onChange={() => handlePendingStatusChange("Losted")}
+                  />
+                  <span>Losted</span>
+                </label>
+                <label className="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={pendingStatuses.includes("Returned")}
+                    onChange={() => handlePendingStatusChange("Returned")}
+                  />
+                  <span>Returned</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Search Button */}
           <button
             type="submit"
             className="px-4 py-2 bg-indigo-600 text-white cursor-pointer rounded-md text-sm hover:bg-indigo-700"
@@ -173,7 +186,7 @@ export default function StudentList() {
         </div>
       </form>
 
-      {/* student List */}
+      {/* Book List */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -185,16 +198,19 @@ export default function StudentList() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
+                    Title
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
+                    Author
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
+                    Borrow Date
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Matric No
+                    Due Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Remaining Day
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -205,26 +221,41 @@ export default function StudentList() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {students.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
+                {borrowedBooks.map((borrowedBook) => (
+                  <tr key={borrowedBook.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {student.name}
+                      {borrowedBook.book.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.email}
+                      {borrowedBook.book.author}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.role}
+                      {borrowedBook.borrowDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.matricOrStaffNo}
+                      {borrowedBook.dueDate}
+                    </td>
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        borrowedBook.remainingDay < 0
+                          ? "text-red-500"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {borrowedBook.remainingDay === null
+                        ? "Returned"
+                        : borrowedBook.remainingDay < 0
+                        ? `${Math.abs(borrowedBook.remainingDay)} Days Overdue`
+                        : `${borrowedBook.remainingDay} Day`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.status}
+                      {borrowedBook.status}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
                       <button
-                        onClick={() => router.push(`/students/${student.id}`)}
+                        onClick={() =>
+                          router.push(`/return-book/${borrowedBook.id}`)
+                        }
                         className="relative group p-1 cursor-pointer"
                         title="View"
                       >
@@ -233,32 +264,20 @@ export default function StudentList() {
                           View
                         </span>
                       </button>
-                      {role === "admin" && (
-                        <>
-                          <button
-                            onClick={() =>
-                              router.push(`/user/update/${student.id}`)
-                            }
-                            className="relative group p-1"
-                            title="Update"
-                          >
-                            <PencilSquareIcon className="w-5 h-5 text-yellow-600" />
-                            <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                              Update
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(student.id)}
-                            className="relative group p-1"
-                            title="Delete"
-                            disabled={deleteLoading}
-                          >
-                            <TrashIcon className="w-5 h-5 text-red-600" />
-                            <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                              Delete
-                            </span>
-                          </button>
-                        </>
+
+                      {borrowedBook.status === "Borrowed" && (
+                        <button
+                          onClick={() =>
+                            router.push(`/return-book/${borrowedBook.id}`)
+                          }
+                          className="relative group p-1 cursor-pointer"
+                          title="Return"
+                        >
+                          <ArrowUturnLeftIcon className="w-5 h-5 text-green-600" />
+                          <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            Return
+                          </span>
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -286,7 +305,7 @@ export default function StudentList() {
                   )}
                 </span>{" "}
                 of <span className="font-medium">{pagination.total}</span>{" "}
-                Students
+                borrowed books
               </p>
             </div>
 
@@ -355,29 +374,6 @@ export default function StudentList() {
           </div>
         </>
       )}
-      {showDeleteModal && (
-        <ConfirmationModal
-          message="Are you sure you want to delete this student? This action cannot be undone."
-          onConfirm={confirmDelete}
-          onCancel={cancelDelete}
-          confirmText={deleteLoading ? "Deleting..." : "Delete"}
-          cancelText="Cancel"
-          type="delete"
-        />
-      )}
-
-      {deleteError && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
-          <span className="block sm:inline">{deleteError}</span>
-          <button
-            onClick={() => setDeleteError(null)}
-            className="absolute top-0 right-0 px-2 py-1"
-          >
-            &times;
-          </button>
-        </div>
-      )}
-      <ToastContainer position="top-right" />
     </div>
   );
 }

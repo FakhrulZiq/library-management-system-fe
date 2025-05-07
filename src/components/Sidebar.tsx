@@ -36,18 +36,37 @@ export default function Sidebar() {
       name: "Borrowed Book",
       path: "/return-book",
       icon: <BookCheck size={20} />,
+      roles: ["student"],
+    },
+    {
+      name: "Borrowed Book",
+      path: "/borrowed-book",
+      icon: <BookCheck size={20} />,
+      roles: ["admin", "librarian"],
     },
     {
       name: "Students",
       path: "/students",
       icon: <Users size={20} />,
-      roles: ["admin", "staff"],
+      roles: ["admin", "librarian"],
     },
     {
       name: "Staff",
       path: "/staff",
       icon: <UserCog size={20} />,
-      roles: ["admin", "staff"],
+      roles: ["admin"],
+    },
+    {
+      name: "Add User",
+      path: "/register-user",
+      icon: <UserCog size={20} />,
+      roles: ["admin"],
+    },
+    {
+      name: "Add Book",
+      path: "/add-book",
+      icon: <UserCog size={20} />,
+      roles: ["admin", "librarian"],
     },
   ].filter((item) => {
     return !item.roles || item.roles.includes(role);

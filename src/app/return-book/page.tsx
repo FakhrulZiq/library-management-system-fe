@@ -10,12 +10,12 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface Book {
+interface BorrowedBook {
   id: string;
   borrowDate: string;
   returnDate: string;
   dueDate: string;
-  remainingDay: string;
+  remainingDay: number;
   status: string;
   book: BookDetail;
 }
@@ -25,17 +25,17 @@ interface BookDetail {
   author: string;
 }
 
-interface BookResponse {
+interface BorrowedBookResponse {
   startRecord: number;
   endRecord: number;
   nextPage: number;
   total: number;
   totalPages: number;
-  data: Book[];
+  data: BorrowedBook[];
 }
 
 export default function BookList() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [borrowedBooks, setBorrowedBooks] = useState<BorrowedBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -53,7 +53,7 @@ export default function BookList() {
 
   if (isLoading) return <div>Loading...</div>;
 
-  const fetchBooks = async () => {
+  const fetchBorrowedBooks = async () => {
     setLoading(true);
     try {
       const res = await fetch("http://localhost:3001/borrowedBook/student", {
@@ -75,15 +75,15 @@ export default function BookList() {
         throw new Error("Failed to fetch borrow books");
       }
 
-      const data: BookResponse = await res.json();
-      setBooks(data.data);
+      const data: BorrowedBookResponse = await res.json();
+      setBorrowedBooks(data.data);
       setPagination((prev) => ({
         ...prev,
         total: data.total,
         totalPages: data.totalPages,
       }));
     } catch (error) {
-      console.error("Error fetching books:", error);
+      console.error("Error fetching borrowed books:", error);
     } finally {
       setLoading(false);
     }
@@ -91,15 +91,14 @@ export default function BookList() {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    fetchBooks();
+    fetchBorrowedBooks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.pageNum, pagination.pageSize, selectedStatus]);
+  }, [search, pagination.pageNum, pagination.pageSize, selectedStatus]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSelectedStatus(pendingStatuses);
     setPagination((prev) => ({ ...prev, pageNum: 1 }));
-    fetchBooks();
   };
 
   const handlePageChange = (newPage: number) => {
@@ -158,6 +157,14 @@ export default function BookList() {
                   />
                   <span>Borrowed</span>
                 </label>
+                <label className="flex items-center space-x-2 text-sm mb-2">
+                  <input
+                    type="checkbox"
+                    checked={pendingStatuses.includes("Losted")}
+                    onChange={() => handlePendingStatusChange("Losted")}
+                  />
+                  <span>Losted</span>
+                </label>
                 <label className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
@@ -215,29 +222,41 @@ export default function BookList() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {books.map((book) => (
-                  <tr key={book.id} className="hover:bg-gray-50">
+                {borrowedBooks.map((borrowedBook) => (
+                  <tr key={borrowedBook.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {book.book.title}
+                      {borrowedBook.book.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.book.author}
+                      {borrowedBook.book.author}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.borrowDate}
+                      {borrowedBook.borrowDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.dueDate}
+                      {borrowedBook.dueDate}
+                    </td>
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        borrowedBook.remainingDay < 0
+                          ? "text-red-500"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {borrowedBook.remainingDay === null
+                        ? "Returned"
+                        : borrowedBook.remainingDay < 0
+                        ? `${Math.abs(borrowedBook.remainingDay)} Days Overdue`
+                        : `${borrowedBook.remainingDay} Day`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.remainingDay}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {book.status}
+                      {borrowedBook.status}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
                       <button
-                        onClick={() => router.push(`/book/${book.id}`)}
+                        onClick={() =>
+                          router.push(`/return-book/${borrowedBook.id}`)
+                        }
                         className="relative group p-1 cursor-pointer"
                         title="View"
                       >
@@ -247,9 +266,11 @@ export default function BookList() {
                         </span>
                       </button>
 
-                      {book.status === "Borrowed" && (
+                      {borrowedBook.status === "Borrowed" && (
                         <button
-                          onClick={() => router.push(`/book/${book.id}/return`)}
+                          onClick={() =>
+                            router.push(`/return-book/${borrowedBook.id}`)
+                          }
                           className="relative group p-1 cursor-pointer"
                           title="Return"
                         >
@@ -284,7 +305,8 @@ export default function BookList() {
                     pagination.total
                   )}
                 </span>{" "}
-                of <span className="font-medium">{pagination.total}</span> books
+                of <span className="font-medium">{pagination.total}</span>{" "}
+                borrowed books
               </p>
             </div>
 

@@ -2,6 +2,7 @@
 
 import Sidebar from "@/components/Sidebar";
 import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function DashboardLayout({
@@ -9,13 +10,14 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      logout();
+      router.push("/login");
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (
