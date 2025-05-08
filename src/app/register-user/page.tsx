@@ -45,7 +45,7 @@ export default function RegisterPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ role: "student", ...payload }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -65,13 +65,13 @@ export default function RegisterPage() {
 
   const handleLoginRedirect = () => {
     setShowModal(false);
-    router.push("/login");
+    router.push("/staff");
   };
 
   return (
     <div className="min-h-screen flex items-center text-gray-500 justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="bg-white p-8 rounded-2xl rounded shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-blue-700">Register</h1>
+        <h1 className="text-3xl font-bold mb-6 text-blue-700">Add User</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             name="email"
@@ -100,6 +100,16 @@ export default function RegisterPage() {
             className="w-full px-4 py-2 border rounded"
             required
           />
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded"
+          >
+            <option value="student">Student</option>
+            <option value="librarian">Librarian</option>
+          </select>
+
           <div className="relative">
             <input
               name="password"
@@ -134,14 +144,8 @@ export default function RegisterPage() {
             type="submit"
             className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-200"
           >
-            Register
+            Add User
           </button>
-          <p className="text-sm text-center mt-4 text-gray-600">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-600 hover:underline">
-              Login here
-            </Link>
-          </p>
         </form>
         {message && (
           <p className="mt-4 text-center text-sm text-red-600">{message}</p>
@@ -150,9 +154,9 @@ export default function RegisterPage() {
 
       {showModal && (
         <SuccessModal
-          message="You can now proceed to login."
+          message="User added sucessfully!"
           onClose={handleLoginRedirect}
-          buttonText="Proceed to Login"
+          buttonText="Complete"
         />
       )}
       <ToastContainer position="top-right" />

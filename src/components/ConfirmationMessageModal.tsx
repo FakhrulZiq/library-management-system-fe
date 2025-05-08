@@ -6,6 +6,7 @@ type ConfirmationModalProps = {
   onCancel: () => void;
   confirmText?: string;
   cancelText?: string;
+  type?: "delete" | "update" | "default";
 };
 
 export function ConfirmationModal({
@@ -14,11 +15,12 @@ export function ConfirmationModal({
   onCancel,
   confirmText = "Yes",
   cancelText = "Cancel",
+  type,
 }: ConfirmationModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-      <div className="bg-white p-6 z-50 rounded-xl shadow-xl w-full max-w-sm text-center">
+      <div className="bg-white p-6 z-50 text-gray-600 rounded-xl shadow-xl w-full max-w-sm text-center">
         <h2 className="text-xl font-bold mb-4">Are you sure?</h2>
         <p className="mb-6">{message}</p>
         <div className="flex justify-center gap-4">
@@ -30,7 +32,13 @@ export function ConfirmationModal({
           </button>
           <button
             onClick={onConfirm}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+            className={`px-4 py-2 rounded-lg text-white ${
+              type === "delete"
+                ? "bg-red-500 hover:bg-red-600"
+                : type === "update"
+                ? "bg-blue-500 hover:bg-blue-600"
+                : "bg-green-500 hover:bg-green-600"
+            }`}
           >
             {confirmText}
           </button>

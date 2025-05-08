@@ -10,6 +10,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/authContext";
 import { ConfirmationModal } from "@/components/ConfirmationMessageModal";
+import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify/unstyled";
 
 interface Book {
   id: string;
@@ -27,6 +29,7 @@ interface BookResponse {
   total: number;
   totalPages: number;
   data: Book[];
+  message?: string;
 }
 
 export default function BookList() {
@@ -64,12 +67,12 @@ export default function BookList() {
           pageSize: pagination.pageSize,
         }),
       });
+      const data: BookResponse = await res.json();
 
       if (!res.ok) {
-        throw new Error("Failed to fetch books");
+        toast.error(data.message || "Failed to fetch books");
       }
 
-      const data: BookResponse = await res.json();
       setBooks(data.data);
       setPagination((prev) => ({
         ...prev,
@@ -86,12 +89,11 @@ export default function BookList() {
   useEffect(() => {
     fetchBooks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.pageNum, pagination.pageSize]);
+  }, [pagination.pageNum, pagination.pageSize, search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPagination((prev) => ({ ...prev, pageNum: 1 }));
-    fetchBooks();
   };
 
   const handlePageChange = (newPage: number) => {
@@ -119,7 +121,8 @@ export default function BookList() {
       });
 
       if (!res.ok) {
-        throw new Error(res.statusText || "Failed to delete book");
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to delete book");
       }
 
       // Refresh the book list after successful deletion
@@ -232,10 +235,8 @@ export default function BookList() {
                       {role === "admin" && (
                         <>
                           <button
-                            onClick={() =>
-                              router.push(`/book/update/${book.id}`)
-                            }
-                            className="relative group p-1"
+                            onClick={() => router.push(`/book/${book.id}`)}
+                            className="relative group p-1 cursor-pointer"
                             title="Update"
                           >
                             <PencilSquareIcon className="w-5 h-5 text-yellow-600" />
@@ -245,7 +246,7 @@ export default function BookList() {
                           </button>
                           <button
                             onClick={() => handleDelete(book.id)}
-                            className="relative group p-1"
+                            className="relative group p-1 cursor-pointer"
                             title="Delete"
                             disabled={deleteLoading}
                           >
@@ -357,7 +358,12 @@ export default function BookList() {
           onCancel={cancelDelete}
           confirmText={deleteLoading ? "Deleting..." : "Delete"}
           cancelText="Cancel"
+          type="delete"
         />
+      )}
+
+      {deleteError && (
+        <p className="text-sm text-red-600 mt-2">{deleteError}</p>
       )}
 
       {deleteError && (
@@ -371,6 +377,7 @@ export default function BookList() {
           </button>
         </div>
       )}
+      <ToastContainer position="top-right" />
     </div>
   );
 }

@@ -11,8 +11,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/authContext";
 import { toast, ToastContainer } from "react-toastify";
+import { ConfirmationModal } from "@/components/ConfirmationMessageModal";
 
-interface Student {
+interface Staff {
   id: string;
   email: string;
   role: string;
@@ -21,17 +22,17 @@ interface Student {
   status: string;
 }
 
-interface StudentResponse {
+interface StaffResponse {
   startRecord: number;
   endRecord: number;
   nextPage: number;
   total: number;
   totalPages: number;
-  data: Student[];
+  data: Staff[];
 }
 
 export default function StaffList() {
-  const [students, setStudents] = useState<Student[]>([]);
+  const [staffs, setstaffs] = useState<staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -43,6 +44,11 @@ export default function StaffList() {
     total: 0,
     totalPages: 0,
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [staffToDelete, setstaffToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const router = useRouter();
   const { role, isLoading } = useAuth();
 
@@ -71,15 +77,15 @@ export default function StaffList() {
         toast.error(errData.message || "Failed to fetch staff");
       }
 
-      const data: StudentResponse = await res.json();
-      setStudents(data.data);
+      const data: StaffResponse = await res.json();
+      setstaffs(data.data);
       setPagination((prev) => ({
         ...prev,
         total: data.total,
         totalPages: data.totalPages,
       }));
     } catch (error) {
-      console.error("Error fetching students:", error);
+      console.error("Error fetching staffs:", error);
     } finally {
       setLoading(false);
     }
@@ -89,7 +95,7 @@ export default function StaffList() {
   useEffect(() => {
     fetchStaff();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRoles, pagination.pageNum, pagination.pageSize]);
+  }, [search, selectedRoles, pagination.pageNum, pagination.pageSize]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,15 +112,56 @@ export default function StaffList() {
 
   const handlePendingRoleChange = (roles: string) => {
     setPendingRoles((prev) =>
-      prev.includes(roles)
-        ? prev.filter((s) => s !== roles)
-        : [...prev, roles]
+      prev.includes(roles) ? prev.filter((s) => s !== roles) : [...prev, roles]
     );
+  };
+
+  const handleDelete = (staffId: string) => {
+    setstaffToDelete(staffId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!staffToDelete) return;
+
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      const res = await fetch(`http://localhost:3001/user/${staffToDelete}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(res.statusText || "Failed to delete staff");
+      }
+
+      // Refresh the staff list after successful deletion
+      await fetchStaff();
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error("Error deleting staff:", error);
+      setDeleteError(
+        error instanceof Error ? error.message : "Failed to delete staff"
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setstaffToDelete(null);
+    setDeleteError(null);
   };
 
   return (
     <div className="container mx-auto px-4 text-gray-700 py-8">
-      <h1 className="text-2xl font-bold mb-6">Student List</h1>
+      <h1 className="text-2xl font-bold mb-6">Staff List</h1>
 
       {/* Search Form */}
       <form onSubmit={handleSearch} className="mb-6 w-full relative">
@@ -176,7 +223,7 @@ export default function StaffList() {
         </div>
       </form>
 
-      {/* Book List */}
+      {/* staff List */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -208,26 +255,26 @@ export default function StaffList() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {students.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
+                {staffs.map((staff) => (
+                  <tr key={staff.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {student.name}
+                      {staff.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.email}
+                      {staff.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.role}
+                      {staff.role}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.matricOrStaffNo}
+                      {staff.matricOrStaffNo}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.status}
+                      {staff.status}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
                       <button
-                        onClick={() => router.push(`/user/${student.id}`)}
+                        onClick={() => router.push(`/staff/${staff.id}`)}
                         className="relative group p-1 cursor-pointer"
                         title="View"
                       >
@@ -240,7 +287,7 @@ export default function StaffList() {
                         <>
                           <button
                             onClick={() =>
-                              router.push(`/user/update/${student.id}`)
+                              router.push(`/user/update/${staff.id}`)
                             }
                             className="relative group p-1"
                             title="Update"
@@ -251,9 +298,10 @@ export default function StaffList() {
                             </span>
                           </button>
                           <button
-                            onClick={() => handleDelete(student.id)}
+                            onClick={() => handleDelete(staff.id)}
                             className="relative group p-1"
                             title="Delete"
+                            disabled={deleteLoading}
                           >
                             <TrashIcon className="w-5 h-5 text-red-600" />
                             <span className="absolute left-1/2 -top-6 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -288,7 +336,7 @@ export default function StaffList() {
                   )}
                 </span>{" "}
                 of <span className="font-medium">{pagination.total}</span>{" "}
-                Students
+                staffs
               </p>
             </div>
 
@@ -356,6 +404,28 @@ export default function StaffList() {
             </div>
           </div>
         </>
+      )}
+      {showDeleteModal && (
+        <ConfirmationModal
+          message="Are you sure you want to delete this staff? This action cannot be undone."
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+          confirmText={deleteLoading ? "Deleting..." : "Delete"}
+          cancelText="Cancel"
+          type="delete"
+        />
+      )}
+
+      {deleteError && (
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
+          <span className="block sm:inline">{deleteError}</span>
+          <button
+            onClick={() => setDeleteError(null)}
+            className="absolute top-0 right-0 px-2 py-1"
+          >
+            &times;
+          </button>
+        </div>
       )}
       <ToastContainer position="top-right" />
     </div>
