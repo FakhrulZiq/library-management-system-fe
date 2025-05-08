@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuth } from "@/context/authContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { FiLock, FiMail } from "react-icons/fi";
@@ -12,37 +12,38 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const [retypePassword, setRetypePassword] = useState("");
+  const [showRetypePassword, setShowRetypePassword] = useState(false);
+  const route = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3001/auth/login", {
-        method: "POST",
+      if (password !== retypePassword) {
+        toast.error(`Password doesn't match`);
+        return;
+      }
+
+      const res = await fetch("http://localhost:3001/auth/reset-password", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
         const errData = await res.json();
-        toast.error(errData.message || "Login failed");
+        toast.error(errData.message || "Reset password failed");
         return;
       }
 
-      const data = await res.json();
-      login(
-        data.accessToken,
-        data.refreshToken,
-        data.role,
-        data.email,
-        data.name,
-        data.id
-      );
-      toast.success("Login successful!");
+      toast.success("Password reset successful!. Proceed to login");
+      setTimeout(() => {
+        route.push("/login");
+      }, 2000);
     } catch (err) {
       console.warn(err);
-      toast.error("An error occurred during login");
+      toast.error("An error occurred during reset password");
     }
   };
 
@@ -52,16 +53,17 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md transition-all duration-300"
       >
-        <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
-          Login
+        <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">
+          Reset Password
         </h1>
         <p className="text-sm text-center mt-2 mb-6 text-gray-600">
-          Hello again! Ready to borrow a new book or manage your account?
+          Enter a new password to reset the password to you account. We will ask
+          for this password whenever you login
         </p>
 
         {/* Email field */}
         <label className="block mb-2 text-sm font-medium text-gray-700">
-          Email
+          Email<span className="text-red-700">*</span>
         </label>
         <div className="relative mb-4">
           <FiMail className="absolute top-3.5 left-3 text-gray-500" />
@@ -77,7 +79,7 @@ export default function LoginPage() {
 
         {/* Password field */}
         <label className="block mb-2 text-sm font-medium text-gray-700">
-          Password
+          Password<span className="text-red-700">*</span>
         </label>
         <div className="relative mb-3">
           <FiLock className="absolute top-3.5 left-3 text-gray-500" />
@@ -96,26 +98,37 @@ export default function LoginPage() {
             {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
           </div>
         </div>
-        <p className="text-sm text-right text-gray-600">
-          <Link
-            href="/reset-password"
-            className="text-blue-600 hover:underline"
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Retype Password<span className="text-red-700">*</span>
+        </label>
+        <div className="relative mb-3">
+          <FiLock className="absolute top-3.5 left-3 text-gray-500" />
+          <input
+            type={showRetypePassword ? "text" : "password"}
+            placeholder="••••••••"
+            className="pl-10 pr-10 py-2 w-full border border-gray-500 rounded-lg placeholder-gray-400 text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={retypePassword}
+            onChange={(e) => setRetypePassword(e.target.value)}
+            required
+          />
+          <div
+            onClick={() => setShowRetypePassword(!showRetypePassword)}
+            className="absolute top-3.5 right-3 cursor-pointer text-gray-500"
           >
-            Forgot your password?
-          </Link>
-        </p>
+            {showRetypePassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+          </div>
+        </div>
 
         <button
           type="submit"
           className="w-full bg-blue-600 mt-6 text-white cursor-pointer font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-200"
         >
-          Login
+          Reset Password
         </button>
 
         <p className="text-sm text-center mt-4 text-gray-600">
-          Don’t have an account?{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Register here
+          <Link href="/login" className="text-blue-600 hover:underline">
+            Return To Login
           </Link>
         </p>
       </form>
