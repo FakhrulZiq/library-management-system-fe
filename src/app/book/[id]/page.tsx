@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { BookOpenIcon } from "@heroicons/react/24/solid";
 import { useAuth } from "@/context/authContext";
@@ -31,6 +31,7 @@ export default function BookDetailPage() {
   const [bookToUpdate, setBookToUpdate] = useState<string | null>(null);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -141,6 +142,12 @@ export default function BookDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
+      <button
+        onClick={() => router.back()}
+        className="mb-4 text-sm text-blue-600 cursor-pointer hover:underline"
+      >
+        ← Back
+      </button>
       <h1 className="text-2xl font-bold mb-6 flex text-gray-700 items-center gap-2">
         <BookOpenIcon className="w-6 h-6 text-indigo-600" />
         Book Detail

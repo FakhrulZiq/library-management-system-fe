@@ -3,7 +3,7 @@
 import { ConfirmationModal } from "@/components/ConfirmationMessageModal";
 import { BookOpenIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,6 +18,7 @@ export default function BorrowedBookDetailPage() {
   const [returnOrLostError, setReturnOrLostError] = useState<string | null>(
     null
   );
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -104,11 +105,25 @@ export default function BorrowedBookDetailPage() {
 
   if (!borrowedBookDetails) return <p className="p-6">No data found.</p>;
 
-  const { book, user, borrowDate, returnDate, dueDate, remainingDay, status, fine } =
-    borrowedBookDetails;
+  const {
+    book,
+    user,
+    borrowDate,
+    returnDate,
+    dueDate,
+    remainingDay,
+    status,
+    fine,
+  } = borrowedBookDetails;
 
   return (
     <div className="max-w-2xl mx-auto p-6">
+      <button
+        onClick={() => router.back()}
+        className="mb-4 text-sm text-blue-600 cursor-pointer hover:underline"
+      >
+        ← Back
+      </button>
       <h1 className="text-2xl font-bold mb-6 flex text-gray-700 items-center gap-2">
         <BookOpenIcon className="w-6 h-6 text-indigo-600" />
         Borrow Transaction Detail
