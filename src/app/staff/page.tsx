@@ -32,7 +32,7 @@ interface StaffResponse {
 }
 
 export default function StaffList() {
-  const [staffs, setstaffs] = useState<staff[]>([]);
+  const [staffs, setstaffs] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -287,9 +287,9 @@ export default function StaffList() {
                         <>
                           <button
                             onClick={() =>
-                              router.push(`/user/update/${staff.id}`)
+                              router.push(`/staff/${staff.id}`)
                             }
-                            className="relative group p-1"
+                            className="relative group p-1 cursor-pointer"
                             title="Update"
                           >
                             <PencilSquareIcon className="w-5 h-5 text-yellow-600" />
@@ -299,7 +299,7 @@ export default function StaffList() {
                           </button>
                           <button
                             onClick={() => handleDelete(staff.id)}
-                            className="relative group p-1"
+                            className="relative group p-1 cursor-pointer"
                             title="Delete"
                             disabled={deleteLoading}
                           >

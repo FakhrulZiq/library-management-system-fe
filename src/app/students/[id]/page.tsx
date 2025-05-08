@@ -42,7 +42,7 @@ export default function UserPage() {
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow-md rounded text-gray-800">
       <button
         onClick={() => router.back()}
-        className="mb-4 text-sm text-blue-600 hover:underline"
+        className="mb-4 text-sm text-blue-600 cursor-pointer hover:underline"
       >
         ← Back
       </button>

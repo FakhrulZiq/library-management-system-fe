@@ -127,7 +127,10 @@ export default function Sidebar() {
             collapsed ? "justify-center" : "justify-between"
           } mb-4`}
         >
-          <div className="flex items-center">
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => router.push("/profile")}
+          >
             <Image
               src="/image/me.png"
               alt="admin"

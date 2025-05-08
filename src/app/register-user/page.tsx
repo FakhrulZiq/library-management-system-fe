@@ -69,9 +69,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center text-gray-500 justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white p-8 rounded-2xl rounded shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-blue-700">Add User</h1>
+    <div className="max-w-4xl mx-auto p-6 bg-white text-gray-600 rounded-xl shadow-md mt-6">
+      <div className="bg-white rounded-2xl rounded">
+        <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
+          Add User
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             name="email"

@@ -238,18 +238,31 @@ export default function BookList() {
                     </td>
                     <td
                       className={`px-6 py-4 whitespace-nowrap text-sm ${
-                        borrowedBook.remainingDay < 0
+                        borrowedBook.status === "Losted"
+                          ? "text-red-700"
+                          : borrowedBook.remainingDay < 0
                           ? "text-red-500"
-                          : "text-gray-500"
+                          : "text-green-700"
                       }`}
                     >
-                      {borrowedBook.remainingDay === null
+                      {borrowedBook.status === "Losted"
+                        ? "Losted"
+                        : borrowedBook.remainingDay === null
                         ? "Returned"
                         : borrowedBook.remainingDay < 0
                         ? `${Math.abs(borrowedBook.remainingDay)} Days Overdue`
                         : `${borrowedBook.remainingDay} Day`}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        borrowedBook.status === "Losted"
+                          ? "text-red-700"
+                          : borrowedBook.remainingDay < 0
+                          ? "text-red-500"
+                          : "text-green-700"
+                      }`}
+                    >
+                      {" "}
                       {borrowedBook.status}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
