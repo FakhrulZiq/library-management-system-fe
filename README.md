@@ -45,7 +45,7 @@ A web-based frontend application for managing a library system. Users can log in
 git clone https://github.com/FakhrulZiq/library-management-system-fe
 
 # Navigate into the project directory
-cd your-repo-name
+cd library-management-system-fe
 
 # Install dependencies
 npm install
@@ -64,8 +64,7 @@ Visit http://localhost:3000 to view the app in your browser.
 ## 📂 Project Structure
 ```bash
 /components      → Reusable UI components  
-/pages           → Next.js pages  
-/services        → API service handlers  
+/app             → Next.js pages  
 /styles          → Global and module-based styles
 ```
 
