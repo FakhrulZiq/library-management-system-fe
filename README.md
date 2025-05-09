@@ -42,7 +42,7 @@ A web-based frontend application for managing a library system. Users can log in
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/your-repo-name.git
+git clone https://github.com/FakhrulZiq/library-management-system-fe
 
 # Navigate into the project directory
 cd your-repo-name
