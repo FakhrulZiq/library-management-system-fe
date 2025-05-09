@@ -237,9 +237,9 @@ export default function StudentList() {
                         <>
                           <button
                             onClick={() =>
-                              router.push(`/user/update/${student.id}`)
+                              router.push(`/students/${student.id}`)
                             }
-                            className="relative group p-1"
+                            className="relative group p-1 cursor-pointer"
                             title="Update"
                           >
                             <PencilSquareIcon className="w-5 h-5 text-yellow-600" />
@@ -249,7 +249,7 @@ export default function StudentList() {
                           </button>
                           <button
                             onClick={() => handleDelete(student.id)}
-                            className="relative group p-1"
+                            className="relative group p-1 cursor-pointer"
                             title="Delete"
                             disabled={deleteLoading}
                           >

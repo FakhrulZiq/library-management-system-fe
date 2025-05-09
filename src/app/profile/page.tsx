@@ -109,6 +109,7 @@ export default function ProfilePage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    const userId = localStorage.getItem("id");
 
     if (newPassword !== retypePassword) {
       setMessage("Passwords do not match.");
@@ -237,9 +238,9 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={handleUpdateUser}
-            className="bg-indigo-600 text-white px-4 py-2 cursor-poointer rounded hover:bg-indigo-700"
+            className="bg-indigo-600 text-white px-4 py-2 cursor-pointer rounded hover:bg-indigo-700"
           >
-            Update User
+            Update
           </button>
         </form>
       ) : (
@@ -313,7 +314,7 @@ export default function ProfilePage() {
 
       {showUpdateModal && (
         <ConfirmationModal
-          message="Are you sure you want to update this user profile?"
+          message="Are you sure you want to update this profile?"
           onConfirm={confirmUpdateUser}
           onCancel={cancelUpdate}
           confirmText={updateLoading ? "Updating..." : "Update"}

@@ -19,6 +19,7 @@ export default function RegisterPage() {
 
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   const router = useRouter();
@@ -133,13 +134,19 @@ export default function RegisterPage() {
           <div className="relative">
             <input
               name="retypePassword"
-              type={showPassword ? "text" : "password"}
+              type={showRetypePassword ? "text" : "password"}
               placeholder="Retype Password"
               value={formData.retypePassword}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded pr-10"
               required
             />
+            <div
+              onClick={() => setShowRetypePassword(!showRetypePassword)}
+              className="absolute top-3.5 right-3 cursor-pointer text-gray-500"
+            >
+              {showRetypePassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+            </div>
           </div>
 
           <button
