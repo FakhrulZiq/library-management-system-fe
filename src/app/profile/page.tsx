@@ -31,10 +31,9 @@ export default function ProfilePage() {
   const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
-  const userId = localStorage.getItem("id");
-
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("id");
 
     fetch(`http://localhost:3001/user/${userId}`, {
       headers: {
@@ -72,6 +71,7 @@ export default function ProfilePage() {
 
     try {
       const { id, ...userData } = editUser;
+      const userId = localStorage.getItem("id");
 
       const response = await fetch(`http://localhost:3001/user/${userId}`, {
         method: "PUT",

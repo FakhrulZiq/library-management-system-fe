@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -90,10 +91,13 @@ export default function Sidebar() {
           } mb-8`}
         >
           {!collapsed && (
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="text-2xl font-bold flex items-center gap-2"
+            >
               <span>📘</span>
               <span>Library</span>
-            </h1>
+            </Link>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}

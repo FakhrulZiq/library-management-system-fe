@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 interface BorrowedBook {
   id: string;
@@ -72,7 +73,7 @@ export default function BookList() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to fetch borrow books");
+        toast.error("Failed to fetch borrow books");
       }
 
       const data: BorrowedBookResponse = await res.json();
@@ -92,7 +93,6 @@ export default function BookList() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     fetchBorrowedBooks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, pagination.pageNum, pagination.pageSize, selectedStatus]);
 
   const handleSearch = (e: React.FormEvent) => {
