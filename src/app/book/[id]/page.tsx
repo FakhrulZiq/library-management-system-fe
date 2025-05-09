@@ -18,6 +18,7 @@ export type Book = {
   published_year: number;
   imageUrl: string;
   quantity: string;
+  isbn: string;
 };
 
 export default function BookDetailPage() {
@@ -31,7 +32,7 @@ export default function BookDetailPage() {
   const [bookToUpdate, setBookToUpdate] = useState<string | null>(null);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -100,6 +101,11 @@ export default function BookDetailPage() {
     const token = localStorage.getItem("token");
 
     const { id, ...bookWithoutId } = editBook || {};
+
+    if (editBook?.isbn && editBook.isbn.length > 10) {
+      toast.error("ISBN should not be more than 10 characters");
+      return;
+    }
 
     try {
       const response = await fetch(
@@ -255,6 +261,20 @@ export default function BookDetailPage() {
                 />
               </div>
 
+              <div className="flex items-center gap-2">
+                <label className="whitespace-nowrap font-semibold">ISBN:</label>
+                <input
+                  className="border rounded p-1 w-full"
+                  value={editBook?.isbn || ""}
+                  onChange={(e) =>
+                    setEditBook((prev) => ({
+                      ...prev!,
+                      isbn: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
               {(role === "admin" || role === "librarian") && (
                 <div className="flex items-center gap-2">
                   <label className="whitespace-nowrap font-semibold">
@@ -293,6 +313,10 @@ export default function BookDetailPage() {
               <p>
                 <span className="font-semibold">Published Year:</span>{" "}
                 {book.published_year}
+              </p>
+              <p>
+                <span className="font-semibold">ISBN:</span>{" "}
+                {book.isbn}
               </p>
               {(role === "admin" || role === "librarian") && (
                 <p>
